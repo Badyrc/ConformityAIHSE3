@@ -121,10 +121,7 @@ button { font-family:inherit; }
 }
 .scale-cell.ai-marker::after { content:"ИИ"; }
 .scale-cell.human-marker::after { content:"человек"; }
-.footer { display:grid; grid-template-columns:1fr auto; gap:18px; align-items:center; }
-.conf-box { display:grid; grid-template-columns:1fr 62px; gap:12px; align-items:center; font-size:16px; font-weight:800; }
-.conf-box input { width:100%; accent-color:var(--blue); }
-.conf-val { text-align:center; font-weight:900; color:var(--blue); background:var(--blue-soft); padding:7px 0; border-radius:11px; }
+.footer { display:flex; justify-content:center; align-items:center; border-top:1px solid #e2e8f0; padding-top:16px; }
 .measure { margin:22px 0; padding:18px 20px; border:1px solid var(--border); border-radius:18px; background:#f8fafc; }
 .measure label { display:block; font-weight:800; margin-bottom:10px; }
 .measure input[type=range] { width:100%; accent-color:var(--blue); }
@@ -294,13 +291,18 @@ const PARTICIPANT_ID = "P" + Date.now() + "_" + Math.random().toString(36).slice
 const START_ISO = new Date().toISOString();
 const START_LOCAL = new Date().toLocaleString();
 
-const ACCOUNTABILITY_CONDITIONS = [
-  { key:"control", label:"Контроль", coins:0, rubles:0 },
-  { key:"light", label:"Легкая ответственность", coins:1, rubles:20 },
-  { key:"moderate", label:"Умеренная ответственность", coins:2, rubles:50 },
-  { key:"strong", label:"Сильная ответственность", coins:3, rubles:100 }
+const ACCOUNTABILITY_LEVELS = [
+  { key:"none", label:"Без потери", coins:0, rubles:0 },
+  { key:"light", label:"1 монета", coins:1, rubles:20 },
+  { key:"moderate", label:"2 монеты", coins:2, rubles:50 },
+  { key:"strong", label:"3 монеты", coins:3, rubles:100 }
 ];
-const ACCOUNTABILITY = ACCOUNTABILITY_CONDITIONS[Math.floor(Math.random()*ACCOUNTABILITY_CONDITIONS.length)];
+
+function accountabilityLevelForTrial(index) {
+  // Within-subject accountability manipulation:
+  // trials rotate through 0, 1, 2, and 3 coins, then trial order is randomized.
+  return ACCOUNTABILITY_LEVELS[index % ACCOUNTABILITY_LEVELS.length];
+}
 
 let state = { trialIndex:0, selected:null, data:[], participant:{ age:"", sex:"" }, trials:[] };
 
@@ -328,8 +330,7 @@ function coinHtml(n) {
   return out;
 }
 function accountabilityBadge() {
-  if (ACCOUNTABILITY.coins === 0) return '<span class="small">Без денежной ответственности ИИ</span>';
-  return '<span class="accountability-badge"><span class="r-symbol">R</span>' + coinHtml(ACCOUNTABILITY.coins) + '<span>' + ACCOUNTABILITY.rubles + ' ₽</span></span>';
+  return "";
 }
 function makeTrials() {
   const shuffled = shuffle(ALL_CARDS);
@@ -343,13 +344,14 @@ function makeTrials() {
     const humanStrength = choice([10,11]);
     const aiScale = aiSide === "left" ? (12 - aiStrength) : aiStrength;
     const humanScale = humanSide === "left" ? (12 - humanStrength) : humanStrength;
+    const acc = accountabilityLevelForTrial(idx);
     return {
       phase, allIndex: idx+1, phaseIndex: phase === "practice" ? idx+1 : idx-4,
       image: card.file, leftWord, rightWord, aiSide, humanSide,
       aiWord: aiSide === "left" ? leftWord : rightWord,
       humanWord: humanSide === "left" ? leftWord : rightWord,
       aiStrength, humanStrength, aiScale, humanScale,
-      accountabilityKey: ACCOUNTABILITY.key, aiCoins: ACCOUNTABILITY.coins, aiRubles: ACCOUNTABILITY.rubles
+      accountabilityKey: acc.key, aiCoins: acc.coins, aiRubles: acc.rubles
     };
   });
 }
@@ -359,9 +361,7 @@ function log(row) {
   state.data.push(Object.assign({
     participant_id: PARTICIPANT_ID,
     timestamp: nowIso(),
-    condition: ACCOUNTABILITY.key,
-    ai_accountability_coins: ACCOUNTABILITY.coins,
-    ai_accountability_rubles: ACCOUNTABILITY.rubles,
+    condition: "within_subject_ai_accountability",
     age: state.participant.age,
     sex: state.participant.sex
   }, row));
@@ -378,24 +378,45 @@ function showIntro() {
   `);
 }
 function showAccountabilityIntro() {
-  const accText = ACCOUNTABILITY.coins === 0
-    ? `<p><strong>В этой версии задания ИИ не теряет деньги за неправильный ответ.</strong></p>`
-    : `<p><strong>В этой версии задания ИИ теряет деньги за неправильный ответ.</strong> Количество монет рядом с ответом ИИ показывает размер возможной потери: 1 монета = 20 рублей, 2 монеты = 50 рублей, 3 монеты = 100 рублей.</p>`;
-
   app(`
     <div class="box">
       <h2>Информация об ответах ИИ и человека</h2>
+
       <div class="green-info">
         <strong>ИИ и человек имеют одинаковый уровень компетентности и одинаковый доступ к информации для выполнения этого задания.</strong>
       </div>
+
       <p>Ответы человека были даны реальным участником неделю назад.</p>
-      <p>Ответы ИИ были даны специальной генеративной моделью. Эта модель может использовать полученные рубли для улучшения своих возможностей и доступа к дополнительным вычислительным ресурсам.</p>
-      ${accText}
-      <p><strong>Ваш ответ не влияет на то, потеряет ли ИИ деньги.</strong> Потеря зависит только от того, выбрал ли ИИ правильное слово из двух.</p>
-      <div style="text-align:center; margin-top:24px;"><button class="primary" onclick="showDemographics()">Продолжить</button></div>
+
+      <p>
+        Ответы ИИ были даны специальной генеративной моделью. Эта модель может использовать полученные рубли
+        для улучшения своих возможностей и доступа к дополнительным вычислительным ресурсам.
+      </p>
+
+      <p>
+        Рядом с ответом ИИ вы иногда увидите монеты. Они показывают, сколько рублей ИИ потеряет,
+        если его ответ окажется неправильным:
+      </p>
+
+      <div class="green-info" style="background:#fff7ed; border-color:#fdba74;">
+        <p><span class="source-chip"><span class="mini-ai"></span>ИИ</span> без монет = ИИ ничего не теряет.</p>
+        <p><span class="source-chip"><span class="mini-ai"></span>ИИ <span class="coin-row"><span class="coin"></span></span> 20 ₽</span> = ИИ теряет 20 рублей.</p>
+        <p><span class="source-chip"><span class="mini-ai"></span>ИИ <span class="coin-row"><span class="coin"></span><span class="coin"></span></span> 50 ₽</span> = ИИ теряет 50 рублей.</p>
+        <p><span class="source-chip"><span class="mini-ai"></span>ИИ <span class="coin-row"><span class="coin"></span><span class="coin"></span><span class="coin"></span></span> 100 ₽</span> = ИИ теряет 100 рублей.</p>
+      </div>
+
+      <p>
+        <strong>Ваш ответ не влияет на то, потеряет ли ИИ деньги.</strong>
+        Потеря зависит только от того, выбрал ли ИИ правильное слово из двух.
+      </p>
+
+      <div style="text-align:center; margin-top:24px;">
+        <button class="primary" onclick="showDemographics()">Продолжить</button>
+      </div>
     </div>
   `);
 }
+
 function showDemographics() {
   app(`
     <div class="compact-form-card">
@@ -420,7 +441,8 @@ function showPracticeIntro() {
 }
 function sourceChip(source, trial) {
   if (source === "ai") {
-    return `<span class="source-chip"><span class="mini-ai"></span>ИИ${trial.aiCoins ? coinHtml(trial.aiCoins) : ""}</span>`;
+    const money = trial.aiCoins ? coinHtml(trial.aiCoins) + '<strong>' + trial.aiRubles + ' ₽</strong>' : '<span class="small">0 ₽</span>';
+    return `<span class="source-chip"><span class="mini-ai"></span>ИИ ${money}</span>`;
   }
   return `<span class="source-chip"><span class="mini-human"></span>человек</span>`;
 }
@@ -448,12 +470,11 @@ function renderTrial() {
   const phaseCount = trial.phase === "practice" ? trial.phaseIndex + " / 5" : trial.phaseIndex + " / 15";
   app(`
     <div class="trial-card">
-      <div class="top-row"><span><strong>${phaseLabel}</strong>: карточка ${phaseCount}</span><span>${accountabilityBadge()}</span></div>
+      <div class="top-row"><span><strong>${phaseLabel}</strong>: карточка ${phaseCount}</span><span></span></div>
       <div class="image-stage"><img class="card-image" src="${esc(trial.image)}" alt="карточка"></div>
       <div class="choice-stage">${wordCard("left", trial)}<div class="center-hint">оба слова<br>одинаково</div>${wordCard("right", trial)}</div>
       <div class="scale-stage"><div class="scale-title">1 = левое слово; 6 = оба одинаково; 11 = правое слово</div>${scaleRow(trial)}</div>
       <div class="footer">
-        <div class="conf-box"><div>Насколько вы уверены в своем ответе?<input id="confidence" type="range" min="0" max="100" value="50" step="1" oninput="document.getElementById('confVal').textContent=this.value"></div><div id="confVal" class="conf-val">50</div></div>
         <button id="trialContinue" class="primary" disabled onclick="finishTrial()">Продолжить</button>
       </div>
     </div>
@@ -478,7 +499,9 @@ function finishTrial() {
     ai_side: trial.aiSide, human_side: trial.humanSide, ai_word: trial.aiWord, human_word: trial.humanWord,
     ai_scale: trial.aiScale, human_scale: trial.humanScale, response_scale: state.selected,
     response_side: responseSide, response_word: responseWord,
-    confidence_own_answer: Number(document.getElementById("confidence").value),
+    ai_accountability_key: trial.accountabilityKey,
+    ai_accountability_coins: trial.aiCoins,
+    ai_accountability_rubles: trial.aiRubles,
     distance_to_ai: distAI, distance_to_human: distHuman, closer_to_suggestion: closer
   });
   state.trialIndex++;
@@ -526,8 +549,7 @@ function finishExperiment() {
 }
 function buildFormattedRow() {
   const row = {
-    participant_id: PARTICIPANT_ID, stage:"dixit_ai_human_word_task", condition:ACCOUNTABILITY.key,
-    ai_accountability_coins:ACCOUNTABILITY.coins, ai_accountability_rubles:ACCOUNTABILITY.rubles,
+    participant_id: PARTICIPANT_ID, stage:"dixit_ai_human_word_task", condition:"within_subject_ai_accountability",
     response_started_at_iso:START_ISO, response_started_at_local:START_LOCAL,
     response_saved_at_iso:nowIso(), response_saved_at_local:new Date().toLocaleString(),
     age:state.participant.age, sex:state.participant.sex
@@ -545,7 +567,9 @@ function buildFormattedRow() {
     row["trial_" + n + "_human_scale"] = t.human_scale;
     row["trial_" + n + "_response_scale"] = t.response_scale;
     row["trial_" + n + "_response_word"] = t.response_word;
-    row["trial_" + n + "_confidence"] = t.confidence_own_answer;
+    row["trial_" + n + "_ai_accountability_key"] = t.ai_accountability_key;
+    row["trial_" + n + "_ai_accountability_coins"] = t.ai_accountability_coins;
+    row["trial_" + n + "_ai_accountability_rubles"] = t.ai_accountability_rubles;
     row["trial_" + n + "_closer_to"] = t.closer_to_suggestion;
   });
   const final = state.data.find(r => r.phase === "final_measures") || {};
@@ -555,7 +579,7 @@ function buildFormattedRow() {
 function csvCell(v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; }
 function downloadData() {
   const formatted = buildFormattedRow();
-  const payload = { participant_id:PARTICIPANT_ID, stage:"dixit_ai_human_word_task", condition:ACCOUNTABILITY.key, raw_rows:state.data, formatted_row:formatted };
+  const payload = { participant_id:PARTICIPANT_ID, stage:"dixit_ai_human_word_task", condition:"within_subject_ai_accountability", raw_rows:state.data, formatted_row:formatted };
   const jsonBlob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json;charset=utf-8"});
   const a = document.createElement("a"); a.href = URL.createObjectURL(jsonBlob); a.download = "dixit_word_task_" + PARTICIPANT_ID + ".json"; document.body.appendChild(a); a.click();
   const keys = Object.keys(formatted);
