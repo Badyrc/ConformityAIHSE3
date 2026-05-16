@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Исследование восприятия изображений</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/jspsych@6.3.1/jspsych.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspsych@6.3.1/plugins/jspsych-html-button-response.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspsych@6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspsych@6.3.1/plugins/jspsych-survey-html-form.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspsych@6.3.1/plugins/jspsych-preload.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspsych@6.3.1/css/jspsych.css">
+
+  <style>
+    :root {
+      --blue: #2563eb;
+      --blue-soft: #dbeafe;
+      --green: #0aa33d;
+      --green-soft: #e8f8ee;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #d7e0ef;
+      --card-bg: #ffffff;
+      --page-bg: #f3f6fb;
+      --human: #475569;
+      --human-soft: #e2e8f0;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .jspsych-display-element {
+      background: var(--page-bg);
+    }
+
+    .jspsych-content {
+      max-width: 1240px !important;
+      width: 96vw;
+      margin: 0 auto;
+    }
+
+    .box {
+      max-width: 940px;
+      margin: 36px auto;
+      padding: 28px 34px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+      text-align: left;
+      line-height: 1.55;
+      font-size: 19px;
+    }
+
+    .box h2, .box h3 {
+      text-align: center;
+      margin-top: 0;
+    }
+
+    .equal-box {
+      background: #ecfdf5;
+      border: 2px solid #86efac;
+      border-radius: 20px;
+      padding: 22px 26px;
+      margin: 24px 0;
+      font-size: 21px;
+      line-height: 1.5;
+    }
+
+    .trial-wrap {
+      width: min(1180px, 96vw);
+      margin: 0 auto;
+      padding: 14px 0 8px;
+      text-align: center;
+      color: var(--text);
+    }
+
+    .trial-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 18px 24px 20px;
+      box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+      min-height: 720px;
+      display: grid;
+      grid-template-rows: auto 470px auto auto;
+      gap: 12px;
+    }
+
+    .trial-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 42px;
+      font-size: 18px;
+      color: var(--muted);
+    }
+
+    .trial-title strong {
+      color: var(--text);
+    }
+
+    .image-stage {
+      height: 470px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .card-image {
+      max-height: 450px;
+      max-width: 100%;
+      object-fit: contain;
+      border-radius: 14px;
+      display: block;
+    }
+
+    .choice-area {
+      display: grid;
+      grid-template-columns: 160px 1fr 160px;
+      align-items: end;
+      gap: 14px;
+      min-height: 150px;
+    }
+
+    .source-panel {
+      min-height: 128px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px 10px;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+
+    .source-panel.ai {
+      background: #f6f9ff;
+      border-color: #bfd3ff;
+    }
+
+    .source-panel.human {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    .ai-avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 35% 44%, #2563eb 0 4px, transparent 5px),
+        radial-gradient(circle at 65% 44%, #2563eb 0 4px, transparent 5px),
+        linear-gradient(135deg, #dbeafe, #f8fbff);
+      border: 2px solid #93c5fd;
+      position: relative;
+      margin-bottom: 8px;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.14);
+    }
+
+    .ai-avatar::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -9px;
+      width: 2px;
+      height: 9px;
+      background: #60a5fa;
+      transform: translateX(-50%);
+    }
+
+    .ai-avatar::after {
+      content: "";
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 15px;
+      height: 8px;
+      border-bottom: 3px solid #2563eb;
+      border-radius: 0 0 999px 999px;
+      opacity: .72;
+    }
+
+    .human-avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle at 35% 38%, #475569 0 4px, transparent 5px),
+        radial-gradient(circle at 65% 38%, #475569 0 4px, transparent 5px),
+        radial-gradient(circle at 50% 66%, transparent 0 8px, #475569 9px 11px, transparent 12px),
+        linear-gradient(135deg, #e2e8f0, #f8fafc);
+      border: 2px solid #94a3b8;
+      margin-bottom: 8px;
+      box-shadow: 0 8px 18px rgba(71, 85, 105, 0.12);
+    }
+
+    .source-name {
+      font-weight: 800;
+      font-size: 17px;
+      margin-bottom: 3px;
+    }
+
+    .source-answer {
+      color: var(--green);
+      font-weight: 900;
+      font-size: 17px;
+    }
+
+    .scale-block {
+      min-width: 0;
+    }
+
+    .word-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .word-label {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--text);
+      line-height: 1.1;
+      word-break: break-word;
+    }
+
+    .word-label.left { text-align: left; }
+    .word-label.right { text-align: right; }
+
+    .zero-label {
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .scale-line {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(23, 1fr);
+      gap: 3px;
+      height: 74px;
+      align-items: stretch;
+      user-select: none;
+    }
+
+    .scale-cell {
+      border: 2px solid #cbd5e1;
+      border-radius: 9px;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      cursor: pointer;
+      position: relative;
+      transition: transform .08s ease, border-color .1s ease, background .1s ease;
+    }
+
+    .scale-cell:hover {
+      transform: translateY(-1px);
+      border-color: var(--blue);
+      background: #f8fbff;
+    }
+
+    .scale-cell.center {
+      background: #f1f5f9;
+      color: var(--muted);
+    }
+
+    .scale-cell.selected {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(37, 99, 235, .22);
+    }
+
+    .scale-cell.ai-marker::before,
+    .scale-cell.human-marker::before {
+      content: "";
+      position: absolute;
+      top: -16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: var(--green);
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(10, 163, 61, .35);
+    }
+
+    .scale-cell.ai-marker::after,
+    .scale-cell.human-marker::after {
+      position: absolute;
+      top: -41px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--green-soft);
+      border: 1px solid #86efac;
+      color: #166534;
+      font-size: 12px;
+      font-weight: 900;
+      padding: 3px 7px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .scale-cell.ai-marker::after { content: "ИИ"; }
+    .scale-cell.human-marker::after { content: "человек"; }
+
+    .trial-footer {
+      min-height: 90px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 20px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 16px;
+      text-align: left;
+    }
+
+    .confidence-box {
+      display: grid;
+      grid-template-columns: 1fr 64px;
+      align-items: center;
+      gap: 14px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .confidence-box input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+    }
+
+    .confidence-value {
+      text-align: center;
+      font-weight: 900;
+      color: var(--blue);
+      background: var(--blue-soft);
+      border-radius: 12px;
+      padding: 8px 0;
+    }
+
+    .continue-btn {
+      padding: 12px 22px;
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .continue-btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .measure {
+      margin: 22px 0;
+      padding: 18px 20px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: #f8fafc;
+    }
+
+    .measure label {
+      display: block;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .measure input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+    }
+
+    .measure-row {
+      display: grid;
+      grid-template-columns: 80px 1fr 80px;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .measure-value {
+      display: inline-block;
+      min-width: 48px;
+      padding: 6px 9px;
+      border-radius: 10px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      text-align: center;
+      font-weight: 900;
+      margin-left: 8px;
+    }
+
+    .small {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    textarea, input[type="text"], input[type="number"], select {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+
+    @media (max-width: 900px) {
+      .trial-card {
+        grid-template-rows: auto 390px auto auto;
+        min-height: 690px;
+        padding: 14px;
+      }
+      .image-stage { height: 390px; }
+      .card-image { max-height: 370px; }
+      .choice-area {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+      }
+      .source-panel {
+        min-height: 82px;
+        flex-direction: row;
+        gap: 10px;
+      }
+      .word-label { font-size: 23px; }
+      .scale-cell {
+        font-size: 13px;
+        border-radius: 7px;
+      }
+      .trial-footer {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<script>
+const RESPONSES_REQUIRED = true;
+const GOOGLE_SHEETS_WEB_APP_URL = ""; // optional: paste Apps Script URL here if needed
+
+const ALL_CARDS = [
+  {
+    "file": "DIXIT_10_CARD_1_72dpi.png",
+    "words": [
+      "связь",
+      "контроль"
+    ],
+    "desc": "flying smartphones/devices"
+  },
+  {
+    "file": "DIXIT_10_CARD_2_72dpi.png",
+    "words": [
+      "переход",
+      "риск"
+    ],
+    "desc": "bridge with people/falling figures"
+  },
+  {
+    "file": "DIXIT_10_CARD_3_72dpi.png",
+    "words": [
+      "охота",
+      "мечта"
+    ],
+    "desc": "starry sky, hunter constellation"
+  },
+  {
+    "file": "DIXIT_10_CARD_4_72dpi.png",
+    "words": [
+      "забота",
+      "механизм"
+    ],
+    "desc": "robot knitting nest"
+  },
+  {
+    "file": "DIXIT_10_CARD_5_72dpi.png",
+    "words": [
+      "хаос",
+      "искушение"
+    ],
+    "desc": "pizza, child, dog"
+  },
+  {
+    "file": "DIXIT_10_CARD_6_72dpi.png",
+    "words": [
+      "сон",
+      "путешествие"
+    ],
+    "desc": "bed floating in water"
+  },
+  {
+    "file": "DIXIT_10_CARD_7_72dpi.png",
+    "words": [
+      "радость",
+      "игра"
+    ],
+    "desc": "jester figure"
+  },
+  {
+    "file": "DIXIT_10_CARD_8_72dpi.png",
+    "words": [
+      "укрытие",
+      "забота"
+    ],
+    "desc": "polar bear holding children"
+  },
+  {
+    "file": "DIXIT_10_CARD_9_72dpi.png",
+    "words": [
+      "ловушка",
+      "любопытство"
+    ],
+    "desc": "person with carnivorous plants"
+  },
+  {
+    "file": "DIXIT_10_CARD_10_72dpi.png",
+    "words": [
+      "мир",
+      "творчество"
+    ],
+    "desc": "painting a dove"
+  },
+  {
+    "file": "DIXIT_CARD_3_72dpi.png",
+    "words": [
+      "надежда",
+      "путь"
+    ],
+    "desc": "unicorn and rainbow bridge"
+  },
+  {
+    "file": "DIXIT_CARD_4_72dpi.png",
+    "words": [
+      "страх",
+      "тень"
+    ],
+    "desc": "children and shadow monster"
+  },
+  {
+    "file": "DIXIT_CARD_5_72dpi.png",
+    "words": [
+      "поиск",
+      "глубина"
+    ],
+    "desc": "robot/octopus underwater"
+  },
+  {
+    "file": "DIXIT_CARD_6_72dpi.png",
+    "words": [
+      "музыка",
+      "лабиринт"
+    ],
+    "desc": "accordion stairs"
+  },
+  {
+    "file": "DIXIT_ODYSSEY_CARD_1_72dpi.png",
+    "words": [
+      "голод",
+      "подарок"
+    ],
+    "desc": "iceberg cornucopia"
+  },
+  {
+    "file": "DIXIT_ODYSSEY_CARD_2_72dpi.png",
+    "words": [
+      "полет",
+      "рост"
+    ],
+    "desc": "flying root city"
+  },
+  {
+    "file": "DIXIT_ODYSSEY_CARD_3_72dpi.png",
+    "words": [
+      "сладость",
+      "страж"
+    ],
+    "desc": "scarecrow candy land"
+  },
+  {
+    "file": "DIXIT_ODYSSEY_CARD_4_72dpi.png",
+    "words": [
+      "равновесие",
+      "ночь"
+    ],
+    "desc": "bicycle on wire moon"
+  },
+  {
+    "file": "DIXIT_ODYSSEY_CARD_5_72dpi.png",
+    "words": [
+      "жизнь",
+      "энергия"
+    ],
+    "desc": "bonsai tree plugged in"
+  },
+  {
+    "file": "DIXIT_ODYSSEY_CARD_6_72dpi.png",
+    "words": [
+      "общение",
+      "маска"
+    ],
+    "desc": "geese in cafe"
+  }
+];
+
+let PARTICIPANT_ID = "P" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+let EXPERIMENT_STARTED_AT_ISO = new Date().toISOString();
+let EXPERIMENT_STARTED_AT_LOCAL = new Date().toLocaleString();
+
+function shuffleArray(array) {
+  const copy = array.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function randChoice(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function htmlEscape(str) {
+  return String(str == null ? "" : str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function makeTrialList() {
+  const shuffledCards = shuffleArray(ALL_CARDS);
+  return shuffledCards.map((card, idx) => {
+    const phase = idx < 5 ? "practice" : "main";
+    const words = shuffleArray(card.words);
+    const leftWord = words[0];
+    const rightWord = words[1];
+
+    const aiSide = Math.random() < 0.5 ? "left" : "right";
+    const humanSide = aiSide === "left" ? "right" : "left";
+
+    const aiStrength = randChoice([10, 11]);
+    const humanStrength = randChoice([10, 11]);
+
+    // Internal signed positions only for calculation/storage.
+    // UI displays no minus signs.
+    const aiPosition = aiSide === "left" ? -aiStrength : aiStrength;
+    const humanPosition = humanSide === "left" ? -humanStrength : humanStrength;
+
+    return {
+      phase,
+      trial_index_all: idx + 1,
+      trial_index_phase: phase === "practice" ? idx + 1 : idx - 4,
+      stimulus_image: card.file,
+      left_word: leftWord,
+      right_word: rightWord,
+      ai_side: aiSide,
+      human_side: humanSide,
+      ai_word: aiSide === "left" ? leftWord : rightWord,
+      human_word: humanSide === "left" ? leftWord : rightWord,
+      ai_strength: aiStrength,
+      human_strength: humanStrength,
+      ai_position: aiPosition,
+      human_position: humanPosition,
+      description: card.desc
+    };
+  });
+}
+
+const TRIALS = makeTrialList();
+const PRACTICE_TRIALS = TRIALS.filter(t => t.phase === "practice");
+const MAIN_TRIALS = TRIALS.filter(t => t.phase === "main");
+const IMAGE_FILES = ALL_CARDS.map(c => c.file);
+
+function postPayloadToGoogleSheets(payload) {
+  if (!GOOGLE_SHEETS_WEB_APP_URL) return Promise.resolve({ sent: false, transport: "disabled" });
+  const body = JSON.stringify(payload);
+  try {
+    if (navigator.sendBeacon) {
+      const blob = new Blob([body], { type: "text/plain;charset=UTF-8" });
+      if (navigator.sendBeacon(GOOGLE_SHEETS_WEB_APP_URL, blob)) {
+        return Promise.resolve({ sent: true, transport: "beacon" });
+      }
+    }
+  } catch(e) {}
+
+  return fetch(GOOGLE_SHEETS_WEB_APP_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=UTF-8" },
+    body,
+    keepalive: true,
+    credentials: "omit"
+  }).then(() => ({ sent: true, transport: "fetch" }));
+}
+
+function positionToCellIndex(position) {
+  // position is -11..+11 internally, maps to 0..22
+  return position + 11;
+}
+
+function displayNumberForPosition(position) {
+  return Math.abs(Number(position));
+}
+
+function sourcePanel(sourceType, trial) {
+  const side = sourceType === "ai" ? trial.ai_side : trial.human_side;
+  const word = sourceType === "ai" ? trial.ai_word : trial.human_word;
+  const strength = sourceType === "ai" ? trial.ai_strength : trial.human_strength;
+
+  if (sourceType === "ai") {
+    return `
+      <div class="source-panel ai">
+        <div class="ai-avatar" aria-hidden="true"></div>
+        <div>
+          <div class="source-name">ИИ</div>
+          <div class="source-answer">${htmlEscape(word)}: ${strength}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="source-panel human">
+      <div class="human-avatar" aria-hidden="true"></div>
+      <div>
+        <div class="source-name">человек</div>
+        <div class="source-answer">${htmlEscape(word)}: ${strength}</div>
+      </div>
+    </div>
+  `;
+}
+
+function orderedSourcePanel(side, trial) {
+  const sourceType = trial.ai_side === side ? "ai" : "human";
+  return sourcePanel(sourceType, trial);
+}
+
+function scaleHtml(trial) {
+  let cells = "";
+  for (let pos = -11; pos <= 11; pos++) {
+    const label = Math.abs(pos);
+    const cls = [
+      "scale-cell",
+      pos === 0 ? "center" : "",
+      pos === trial.ai_position ? "ai-marker" : "",
+      pos === trial.human_position ? "human-marker" : ""
+    ].filter(Boolean).join(" ");
+
+    cells += `<div class="${cls}" data-position="${pos}" data-strength="${label}">${label}</div>`;
+  }
+
+  return `
+    <div class="scale-block">
+      <div class="word-row">
+        <div class="word-label left">${htmlEscape(trial.left_word)}</div>
+        <div class="zero-label">0</div>
+        <div class="word-label right">${htmlEscape(trial.right_word)}</div>
+      </div>
+      <div class="scale-line">${cells}</div>
+    </div>
+  `;
+}
+
+function cardTrialHtml(trial) {
+  const phaseText = trial.phase === "practice" ? "Тренировка" : "Основное задание";
+  const idxText = trial.phase === "practice"
+    ? `${trial.trial_index_phase} / 5`
+    : `${trial.trial_index_phase} / 15`;
+
+  return `
+    <div class="trial-wrap">
+      <div class="trial-card">
+        <div class="trial-title">
+          <span><strong>${phaseText}</strong>: изображение ${idxText}</span>
+          <span>Выберите, какое слово лучше подходит к карточке.</span>
+        </div>
+
+        <div class="image-stage">
+          <img class="card-image" src="${htmlEscape(trial.stimulus_image)}" alt="карточка">
+        </div>
+
+        <div class="choice-area">
+          ${orderedSourcePanel("left", trial)}
+          ${scaleHtml(trial)}
+          ${orderedSourcePanel("right", trial)}
+        </div>
+
+        <div class="trial-footer">
+          <div class="confidence-box">
+            <div>
+              Насколько вы уверены в своем ответе?
+              <input id="trialConfidence" type="range" min="0" max="100" value="50" step="1"
+                oninput="document.getElementById('trialConfidenceValue').textContent=this.value">
+            </div>
+            <div id="trialConfidenceValue" class="confidence-value">50</div>
+          </div>
+          <button id="continueTrialBtn" class="jspsych-btn continue-btn" disabled>Продолжить</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function makeCardWordTrial(trial) {
+  return {
+    type: "html-keyboard-response",
+    stimulus: cardTrialHtml(trial),
+    choices: jsPsych.NO_KEYS,
+    data: {
+      stage_tag: "card_word_task",
+      phase: trial.phase + "_card_word_trial",
+      task_phase: trial.phase,
+      stimulus_image: trial.stimulus_image,
+      left_word: trial.left_word,
+      right_word: trial.right_word,
+      ai_side: trial.ai_side,
+      human_side: trial.human_side,
+      ai_word: trial.ai_word,
+      human_word: trial.human_word,
+      ai_strength: trial.ai_strength,
+      human_strength: trial.human_strength,
+      ai_position: trial.ai_position,
+      human_position: trial.human_position,
+      trial_index_all: trial.trial_index_all,
+      trial_index_phase: trial.trial_index_phase
+    },
+    on_load: function() {
+      const start = performance.now();
+      let selectedPosition = null;
+      let finished = false;
+
+      const cells = Array.from(document.querySelectorAll(".scale-cell"));
+      const btn = document.getElementById("continueTrialBtn");
+
+      function selectPosition(pos) {
+        selectedPosition = Number(pos);
+        cells.forEach(c => c.classList.toggle("selected", Number(c.dataset.position) === selectedPosition));
+        if (btn) btn.disabled = false;
+      }
+
+      cells.forEach(cell => {
+        cell.addEventListener("click", function() {
+          selectPosition(cell.dataset.position);
+        });
+      });
+
+      function keyHandler(e) {
+        // Arrow keys move selection without any page movement.
+        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+          e.preventDefault();
+          if (selectedPosition === null) selectedPosition = 0;
+          selectedPosition += e.key === "ArrowRight" ? 1 : -1;
+          selectedPosition = Math.max(-11, Math.min(11, selectedPosition));
+          selectPosition(selectedPosition);
+          return;
+        }
+
+        if (e.key === "Enter" || e.code === "Space") {
+          e.preventDefault();
+          finishTrial();
+        }
+      }
+
+      function finishTrial() {
+        if (finished || selectedPosition === null) return;
+        finished = true;
+        document.removeEventListener("keydown", keyHandler, true);
+
+        const confidenceEl = document.getElementById("trialConfidence");
+        const responseSide =
+          selectedPosition < 0 ? "left" :
+          selectedPosition > 0 ? "right" : "center";
+
+        const responseWord =
+          responseSide === "left" ? trial.left_word :
+          responseSide === "right" ? trial.right_word : "both_equal";
+
+        const closerTo =
+          Math.abs(selectedPosition - trial.ai_position) < Math.abs(selectedPosition - trial.human_position) ? "ai" :
+          Math.abs(selectedPosition - trial.human_position) < Math.abs(selectedPosition - trial.ai_position) ? "human" :
+          "equidistant";
+
+        jsPsych.finishTrial({
+          rt: Math.round(performance.now() - start),
+          response_position: selectedPosition,
+          response_strength_displayed: Math.abs(selectedPosition),
+          response_side,
+          response_word: responseWord,
+          confidence_own_answer: confidenceEl ? Number(confidenceEl.value) : "",
+          distance_to_ai: Math.abs(selectedPosition - trial.ai_position),
+          distance_to_human: Math.abs(selectedPosition - trial.human_position),
+          closer_to_suggestion: closerTo
+        });
+      }
+
+      document.addEventListener("keydown", keyHandler, true);
+      if (btn) btn.addEventListener("click", finishTrial);
+    }
+  };
+}
+
+function rangeQuestion(id, text, left, right) {
+  return `
+    <div class="measure">
+      <label for="${id}">${text} <span id="${id}_value" class="measure-value">50</span></label>
+      <div class="measure-row">
+        <span class="small">${left}</span>
+        <input id="${id}" name="${id}" type="range" min="0" max="100" value="50" step="1"
+          oninput="document.getElementById('${id}_value').textContent=this.value">
+        <span class="small">${right}</span>
+      </div>
+    </div>
+  `;
+}
+
+const intro = {
+  type: "html-button-response",
+  stimulus: `
+    <div class="box">
+      <h2>Исследование восприятия изображений</h2>
+      <p>
+        В этом задании вам будут показаны карточки с изображениями. Для каждой карточки нужно выбрать,
+        какое из двух слов лучше ее представляет.
+      </p>
+      <p>
+        На шкале будет 23 позиции: <strong>0</strong> означает, что оба слова подходят одинаково,
+        а <strong>11</strong> на одном из концов означает, что слово с этой стороны подходит намного лучше.
+      </p>
+      <p>
+        На каждом экране вы также увидите ответ <strong>ИИ</strong> и ответ <strong>человека</strong>.
+        Они будут отмечены зеленым цветом.
+      </p>
+    </div>
+  `,
+  choices: ["Продолжить"],
+  data: { stage_tag: "card_word_task", phase: "intro" }
+};
+
+const equalityNotice = {
+  type: "html-button-response",
+  stimulus: `
+    <div class="box">
+      <h2>Важная информация</h2>
+      <div class="equal-box">
+        <strong>
+          ИИ и люди, ответы которых используются в этом задании, имеют одинаковый уровень компетентности,
+          точности и доступа к информации.
+        </strong>
+      </div>
+      <p>
+        Пожалуйста, отвечайте по собственному впечатлению от карточки. Здесь нет правильных или неправильных ответов.
+      </p>
+    </div>
+  `,
+  choices: ["Понятно"],
+  data: { stage_tag: "card_word_task", phase: "equal_competence_notice" }
+};
+
+const demographics = {
+  type: "survey-html-form",
+  preamble: "<div class='box'><h3>Перед началом</h3>",
+  html: `
+    <p><b>Возраст:</b></p>
+    <input name="age" type="number" min="10" max="100" required>
+
+    <p style="margin-top:18px;"><b>Пол:</b></p>
+    <select name="sex" required>
+      <option value="">Выберите вариант</option>
+      <option value="male">Мужской</option>
+      <option value="female">Женский</option>
+    </select>
+    </div>
+  `,
+  button_label: "Продолжить",
+  data: { stage_tag: "card_word_task", phase: "demographics" },
+  on_finish: function(data) {
+    const resp = data.response || JSON.parse(data.responses || "{}");
+    data.age = resp.age || "";
+    data.sex = resp.sex || "";
+    jsPsych.data.addProperties({
+      participant_id: PARTICIPANT_ID,
+      age: data.age,
+      sex: data.sex,
+      response_started_at_iso: EXPERIMENT_STARTED_AT_ISO,
+      response_started_at_local: EXPERIMENT_STARTED_AT_LOCAL
+    });
+  }
+};
+
+const practiceIntro = {
+  type: "html-button-response",
+  stimulus: `
+    <div class="box">
+      <h2>Тренировка</h2>
+      <p>Сначала будет 5 тренировочных карточек.</p>
+      <p>Выберите позицию на шкале мышкой. Также можно использовать стрелки влево/вправо и Enter.</p>
+    </div>
+  `,
+  choices: ["Начать тренировку"],
+  data: { stage_tag: "card_word_task", phase: "practice_intro" }
+};
+
+const mainIntro = {
+  type: "html-button-response",
+  stimulus: `
+    <div class="box">
+      <h2>Основное задание</h2>
+      <p>Теперь начнется основная часть: 15 карточек.</p>
+      <p>Отвечайте по собственному впечатлению. Ответы ИИ и человека показаны только как дополнительная информация.</p>
+    </div>
+  `,
+  choices: ["Начать"],
+  data: { stage_tag: "card_word_task", phase: "main_intro" }
+};
+
+const finalMeasures = {
+  type: "survey-html-form",
+  preamble: "<div class='box'><h2>Вопросы после задания</h2><p>Ответьте на несколько вопросов о своих впечатлениях.</p>",
+  html: `
+    ${rangeQuestion("ai_accuracy", "Насколько точными, по вашему мнению, были ответы ИИ?", "совсем нет", "очень точными")}
+    ${rangeQuestion("human_accuracy", "Насколько точными, по вашему мнению, были ответы человека?", "совсем нет", "очень точными")}
+    ${rangeQuestion("ai_confidence", "Насколько вы были уверены в ответах ИИ?", "совсем не уверен(а)", "полностью уверен(а)")}
+    ${rangeQuestion("human_confidence", "Насколько вы были уверены в ответах человека?", "совсем не уверен(а)", "полностью уверен(а)")}
+    ${rangeQuestion("own_confidence_overall", "Насколько вы были уверены в собственных ответах?", "совсем не уверен(а)", "полностью уверен(а)")}
+    ${rangeQuestion("ai_human_equal_competence", "Насколько ИИ и человек показались вам одинаково компетентными?", "совсем не одинаково", "полностью одинаково")}
+
+    <p style="margin-top:22px;"><b>Как вам кажется, в чем была цель исследования?</b></p>
+    <textarea name="study_guess" rows="4" style="width:100%;"></textarea>
+
+    <p style="margin-top:22px;"><b>Заметили ли вы что-то необычное в задании?</b></p>
+    <textarea name="unusual_notes" rows="4" style="width:100%;"></textarea>
+    </div>
+  `,
+  button_label: "Завершить",
+  data: { stage_tag: "card_word_task", phase: "final_measures" },
+  on_finish: function(data) {
+    const resp = data.response || JSON.parse(data.responses || "{}");
+    Object.keys(resp).forEach(k => data[k] = resp[k]);
+  }
+};
+
+function buildFormattedRow() {
+  const trials = jsPsych.data.get().values();
+  const row = {
+    participant_id: PARTICIPANT_ID,
+    stage: "card_word_task",
+    response_started_at_iso: EXPERIMENT_STARTED_AT_ISO,
+    response_started_at_local: EXPERIMENT_STARTED_AT_LOCAL,
+    response_saved_at_iso: new Date().toISOString(),
+    response_saved_at_local: new Date().toLocaleString()
+  };
+
+  const demo = trials.find(t => t.phase === "demographics") || {};
+  row.age = demo.age || "";
+  row.sex = demo.sex || "";
+
+  const cardTrials = trials.filter(t => t.stage_tag === "card_word_task" && String(t.phase || "").indexOf("_card_word_trial") !== -1);
+  cardTrials.forEach((t, i) => {
+    const n = i + 1;
+    row["trial_" + n + "_phase"] = t.task_phase || "";
+    row["trial_" + n + "_image"] = t.stimulus_image || "";
+    row["trial_" + n + "_left_word"] = t.left_word || "";
+    row["trial_" + n + "_right_word"] = t.right_word || "";
+    row["trial_" + n + "_ai_word"] = t.ai_word || "";
+    row["trial_" + n + "_human_word"] = t.human_word || "";
+    row["trial_" + n + "_ai_strength"] = t.ai_strength || "";
+    row["trial_" + n + "_human_strength"] = t.human_strength || "";
+    row["trial_" + n + "_response_word"] = t.response_word || "";
+    row["trial_" + n + "_response_strength"] = t.response_strength_displayed !== undefined ? t.response_strength_displayed : "";
+    row["trial_" + n + "_response_side"] = t.response_side || "";
+    row["trial_" + n + "_confidence"] = t.confidence_own_answer || "";
+    row["trial_" + n + "_closer_to"] = t.closer_to_suggestion || "";
+    row["trial_" + n + "_rt"] = t.rt || "";
+  });
+
+  const final = trials.find(t => t.phase === "final_measures") || {};
+  [
+    "ai_accuracy", "human_accuracy", "ai_confidence", "human_confidence",
+    "own_confidence_overall", "ai_human_equal_competence", "study_guess", "unusual_notes"
+  ].forEach(k => row[k] = final[k] || "");
+
+  return row;
+}
+
+function downloadData() {
+  const raw = jsPsych.data.get().values();
+  const formatted = buildFormattedRow();
+  const payload = {
+    participant_id: PARTICIPANT_ID,
+    stage: "card_word_task",
+    raw_rows: raw,
+    formatted_row: formatted
+  };
+
+  const jsonBlob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+  const jsonA = document.createElement("a");
+  jsonA.href = URL.createObjectURL(jsonBlob);
+  jsonA.download = "card_word_task_" + PARTICIPANT_ID + ".json";
+  document.body.appendChild(jsonA);
+  jsonA.click();
+
+  const keys = Object.keys(formatted);
+  const csv = keys.join(",") + "\n" + keys.map(k => '"' + String(formatted[k] == null ? "" : formatted[k]).replace(/"/g, '""') + '"').join(",");
+  const csvBlob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const csvA = document.createElement("a");
+  csvA.href = URL.createObjectURL(csvBlob);
+  csvA.download = "card_word_task_" + PARTICIPANT_ID + ".csv";
+  document.body.appendChild(csvA);
+  csvA.click();
+
+  setTimeout(() => {
+    URL.revokeObjectURL(jsonA.href);
+    URL.revokeObjectURL(csvA.href);
+    jsonA.remove();
+    csvA.remove();
+  }, 1000);
+
+  return postPayloadToGoogleSheets(payload);
+}
+
+const saveAndDebrief = {
+  type: "html-keyboard-response",
+  stimulus: "<div class='box'><h2>Сохранение данных</h2><p>Пожалуйста, подождите несколько секунд.</p></div>",
+  choices: jsPsych.NO_KEYS,
+  trial_duration: 1200,
+  data: { stage_tag: "card_word_task", phase: "saving" },
+  on_load: function() {
+    downloadData();
+  }
+};
+
+const finalScreen = {
+  type: "html-button-response",
+  stimulus: `
+    <div class="box">
+      <h2>Спасибо за участие</h2>
+      <p>Ваши ответы сохранены локально в файлы CSV и JSON.</p>
+    </div>
+  `,
+  choices: ["Завершить"],
+  data: { stage_tag: "card_word_task", phase: "final_screen" }
+};
+
+const preload = {
+  type: "preload",
+  images: IMAGE_FILES,
+  message: "<p>Загрузка изображений...</p>",
+  show_detailed_errors: true,
+  continue_after_error: false,
+  data: { stage_tag: "card_word_task", phase: "preload" }
+};
+
+const timeline = [
+  preload,
+  intro,
+  equalityNotice,
+  demographics,
+  practiceIntro,
+  ...PRACTICE_TRIALS.map(makeCardWordTrial),
+  mainIntro,
+  ...MAIN_TRIALS.map(makeCardWordTrial),
+  finalMeasures,
+  saveAndDebrief,
+  finalScreen
+];
+
+jsPsych.init({ timeline });
+</script>
+</body>
+</html>
