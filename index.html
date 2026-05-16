@@ -419,6 +419,54 @@
       font: inherit;
     }
 
+
+    .compact-form-card {
+      max-width: 520px;
+      margin: 30px auto;
+      padding: 24px 28px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+      text-align: left;
+      line-height: 1.5;
+    }
+
+    .compact-form-card h3 {
+      text-align: center;
+      margin-top: 0;
+    }
+
+    .compact-field {
+      margin: 16px 0;
+    }
+
+    .compact-field label {
+      display: block;
+      font-weight: 800;
+      margin-bottom: 7px;
+    }
+
+    .compact-field input,
+    .compact-field select {
+      width: 100%;
+      max-width: 260px;
+      display: block;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font: inherit;
+      background: white;
+    }
+
+    .form-error {
+      display: none;
+      color: #b91c1c;
+      font-weight: 800;
+      margin-top: 12px;
+      text-align: center;
+    }
+
     @media (max-width: 900px) {
       .trial-card {
         grid-template-rows: auto 390px auto auto;
@@ -972,33 +1020,63 @@ const equalityNotice = {
 };
 
 const demographics = {
-  type: "survey-html-form",
-  preamble: "<div class='box'><h3>Перед началом</h3>",
-  html: `
-    <p><b>Возраст:</b></p>
-    <input name="age" type="number" min="10" max="100" required>
+  type: "html-button-response",
+  stimulus: `
+    <div class="compact-form-card">
+      <h3>Перед началом</h3>
 
-    <p style="margin-top:18px;"><b>Пол:</b></p>
-    <select name="sex" required>
-      <option value="">Выберите вариант</option>
-      <option value="male">Мужской</option>
-      <option value="female">Женский</option>
-    </select>
+      <div class="compact-field">
+        <label for="ageInput">Возраст:</label>
+        <input id="ageInput" type="number" min="10" max="100" placeholder="Например, 22">
+      </div>
+
+      <div class="compact-field">
+        <label for="sexInput">Пол:</label>
+        <select id="sexInput">
+          <option value="">Выберите вариант</option>
+          <option value="male">Мужской</option>
+          <option value="female">Женский</option>
+        </select>
+      </div>
+
+      <div id="demoError" class="form-error">Пожалуйста, укажите возраст и пол.</div>
+
+      <div style="text-align:center; margin-top:22px;">
+        <button id="demoContinueBtn" class="jspsych-btn" type="button">Продолжить</button>
+      </div>
     </div>
   `,
-  button_label: "Продолжить",
+  choices: [],
   data: { stage_tag: "card_word_task", phase: "demographics" },
-  on_finish: function(data) {
-    const resp = data.response || JSON.parse(data.responses || "{}");
-    data.age = resp.age || "";
-    data.sex = resp.sex || "";
-    jsPsych.data.addProperties({
-      participant_id: PARTICIPANT_ID,
-      age: data.age,
-      sex: data.sex,
-      response_started_at_iso: EXPERIMENT_STARTED_AT_ISO,
-      response_started_at_local: EXPERIMENT_STARTED_AT_LOCAL
-    });
+  on_load: function() {
+    const btn = document.getElementById("demoContinueBtn");
+    const err = document.getElementById("demoError");
+
+    btn.onclick = function() {
+      const age = (document.getElementById("ageInput").value || "").trim();
+      const sex = document.getElementById("sexInput").value || "";
+
+      if (!age || !sex) {
+        err.style.display = "block";
+        return;
+      }
+
+      jsPsych.data.addProperties({
+        participant_id: PARTICIPANT_ID,
+        age: age,
+        sex: sex,
+        response_started_at_iso: EXPERIMENT_STARTED_AT_ISO,
+        response_started_at_local: EXPERIMENT_STARTED_AT_LOCAL
+      });
+
+      jsPsych.finishTrial({
+        participant_id: PARTICIPANT_ID,
+        age: age,
+        sex: sex,
+        stage_tag: "card_word_task",
+        phase: "demographics"
+      });
+    };
   }
 };
 
@@ -1029,28 +1107,51 @@ const mainIntro = {
 };
 
 const finalMeasures = {
-  type: "survey-html-form",
-  preamble: "<div class='box'><h2>Вопросы после задания</h2><p>Ответьте на несколько вопросов о своих впечатлениях.</p>",
-  html: `
-    ${rangeQuestion("ai_accuracy", "Насколько точными, по вашему мнению, были ответы ИИ?", "совсем нет", "очень точными")}
-    ${rangeQuestion("human_accuracy", "Насколько точными, по вашему мнению, были ответы человека?", "совсем нет", "очень точными")}
-    ${rangeQuestion("ai_confidence", "Насколько вы были уверены в ответах ИИ?", "совсем не уверен(а)", "полностью уверен(а)")}
-    ${rangeQuestion("human_confidence", "Насколько вы были уверены в ответах человека?", "совсем не уверен(а)", "полностью уверен(а)")}
-    ${rangeQuestion("own_confidence_overall", "Насколько вы были уверены в собственных ответах?", "совсем не уверен(а)", "полностью уверен(а)")}
-    ${rangeQuestion("ai_human_equal_competence", "Насколько ИИ и человек показались вам одинаково компетентными?", "совсем не одинаково", "полностью одинаково")}
+  type: "html-button-response",
+  stimulus: `
+    <div class="box">
+      <h2>Вопросы после задания</h2>
+      <p>Ответьте на несколько вопросов о своих впечатлениях.</p>
 
-    <p style="margin-top:22px;"><b>Как вам кажется, в чем была цель исследования?</b></p>
-    <textarea name="study_guess" rows="4" style="width:100%;"></textarea>
+      ${rangeQuestion("ai_accuracy", "Насколько точными, по вашему мнению, были ответы ИИ?", "совсем нет", "очень точными")}
+      ${rangeQuestion("human_accuracy", "Насколько точными, по вашему мнению, были ответы человека?", "совсем нет", "очень точными")}
+      ${rangeQuestion("ai_confidence", "Насколько вы были уверены в ответах ИИ?", "совсем не уверен(а)", "полностью уверен(а)")}
+      ${rangeQuestion("human_confidence", "Насколько вы были уверены в ответах человека?", "совсем не уверен(а)", "полностью уверен(а)")}
+      ${rangeQuestion("own_confidence_overall", "Насколько вы были уверены в собственных ответах?", "совсем не уверен(а)", "полностью уверен(а)")}
+      ${rangeQuestion("ai_human_equal_competence", "Насколько ИИ и человек показались вам одинаково компетентными?", "совсем не одинаково", "полностью одинаково")}
 
-    <p style="margin-top:22px;"><b>Заметили ли вы что-то необычное в задании?</b></p>
-    <textarea name="unusual_notes" rows="4" style="width:100%;"></textarea>
+      <p style="margin-top:22px;"><b>Как вам кажется, в чем была цель исследования?</b></p>
+      <textarea id="studyGuess" rows="4" style="width:100%;"></textarea>
+
+      <p style="margin-top:22px;"><b>Заметили ли вы что-то необычное в задании?</b></p>
+      <textarea id="unusualNotes" rows="4" style="width:100%;"></textarea>
+
+      <div style="text-align:center; margin-top:24px;">
+        <button id="finalMeasuresContinue" class="jspsych-btn" type="button">Завершить</button>
+      </div>
     </div>
   `,
-  button_label: "Завершить",
+  choices: [],
   data: { stage_tag: "card_word_task", phase: "final_measures" },
-  on_finish: function(data) {
-    const resp = data.response || JSON.parse(data.responses || "{}");
-    Object.keys(resp).forEach(k => data[k] = resp[k]);
+  on_load: function() {
+    const btn = document.getElementById("finalMeasuresContinue");
+    btn.onclick = function() {
+      const ids = [
+        "ai_accuracy", "human_accuracy", "ai_confidence", "human_confidence",
+        "own_confidence_overall", "ai_human_equal_competence"
+      ];
+      const out = {
+        stage_tag: "card_word_task",
+        phase: "final_measures"
+      };
+      ids.forEach(function(id) {
+        const el = document.getElementById(id);
+        out[id] = el ? Number(el.value) : "";
+      });
+      out.study_guess = (document.getElementById("studyGuess").value || "").trim();
+      out.unusual_notes = (document.getElementById("unusualNotes").value || "").trim();
+      jsPsych.finishTrial(out);
+    };
   }
 };
 
@@ -1161,7 +1262,7 @@ const preload = {
   images: IMAGE_FILES,
   message: "<p>Загрузка изображений...</p>",
   show_detailed_errors: true,
-  continue_after_error: false,
+  continue_after_error: true,
   data: { stage_tag: "card_word_task", phase: "preload" }
 };
 
